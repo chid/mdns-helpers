@@ -8,6 +8,7 @@ from pathlib import Path
 from mdns_helpers.config import load_config
 from mdns_helpers.generator import generate_artifacts
 from mdns_helpers.models import ValidationError
+from mdns_helpers.uninstall import plan_uninstall
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -103,6 +104,25 @@ class MdnsHelpersTests(unittest.TestCase):
 
             updated = json.loads(config_path.read_text(encoding="utf-8"))
             self.assertFalse(updated["sites"][0]["enabled"])
+
+    def test_uninstall_plan_for_ubuntu(self):
+        config = load_config(str(REPO_ROOT / "examples" / "sample-config.json"))
+        plan = plan_uninstall(config, "ubuntu")
+        deployed = {str(item.path) for item in plan.deployed_paths}
+        self.assertIn("/etc/coredns/Corefile", deployed)
+        self.assertIn("/etc/systemd/system/caddy.service", deployed)
+        self.assertIn("/etc/avahi/services/movies.service", deployed)
+        self.assertEqual(plan.pre_commands[0].argv[:3], ["systemctl", "disable", "--now"])
+        self.assertEqual(plan.post_commands[0].argv, ["systemctl", "daemon-reload"])
+
+    def test_uninstall_plan_for_macos_generated_only(self):
+        config = load_config(str(REPO_ROOT / "examples" / "sample-config.json"))
+        plan = plan_uninstall(config, "macos", remove_generated=True, remove_deployed=False)
+        self.assertEqual(len(plan.generated_paths), 1)
+        self.assertEqual(plan.generated_paths[0].path, REPO_ROOT / "generated" / "macos")
+        self.assertEqual(plan.deployed_paths, [])
+        self.assertEqual(plan.pre_commands, [])
+        self.assertEqual(plan.post_commands, [])
 
 
 if __name__ == "__main__":
