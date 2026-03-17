@@ -7,6 +7,7 @@ from pathlib import Path
 
 from mdns_helpers.config import load_config
 from mdns_helpers.generator import generate_artifacts
+from mdns_helpers.install import plan_install
 from mdns_helpers.models import ValidationError
 from mdns_helpers.uninstall import plan_uninstall
 
@@ -123,6 +124,35 @@ class MdnsHelpersTests(unittest.TestCase):
         self.assertEqual(plan.deployed_paths, [])
         self.assertEqual(plan.pre_commands, [])
         self.assertEqual(plan.post_commands, [])
+
+    def test_install_plan_for_ubuntu(self):
+        config = load_config(str(REPO_ROOT / "examples" / "sample-config.json"))
+        plan = plan_install(config, "ubuntu")
+        destinations = {str(item.destination) for item in plan.deployed_copies}
+        self.assertIn("/etc/coredns/Corefile", destinations)
+        self.assertIn("/etc/systemd/system/caddy.service", destinations)
+        self.assertIn("/etc/avahi/services/movies.service", destinations)
+        self.assertEqual(plan.pre_commands, [])
+        self.assertEqual(plan.post_commands[0].argv, ["systemctl", "daemon-reload"])
+        self.assertEqual(
+            plan.post_commands[1].argv,
+            ["systemctl", "enable", "--now", "coredns.service"],
+        )
+
+    def test_install_plan_for_macos(self):
+        config = load_config(str(REPO_ROOT / "examples" / "sample-config.json"))
+        plan = plan_install(config, "macos")
+        destinations = {str(item.destination) for item in plan.deployed_copies}
+        self.assertIn("/Library/LaunchDaemons/io.charley.coredns.plist", destinations)
+        self.assertIn("/Library/LaunchDaemons/io.charley.mdns.movies.plist", destinations)
+        self.assertEqual(
+            plan.pre_commands[0].argv,
+            ["launchctl", "unload", "-w", "/Library/LaunchDaemons/io.charley.coredns.plist"],
+        )
+        self.assertEqual(
+            plan.post_commands[0].argv,
+            ["launchctl", "load", "-w", "/Library/LaunchDaemons/io.charley.coredns.plist"],
+        )
 
 
 if __name__ == "__main__":

@@ -140,6 +140,13 @@ python3 -m mdns_helpers -c path/to/config.json apply --platform macos
 python3 -m mdns_helpers -c path/to/config.json apply --platform ubuntu
 ```
 
+Install generated files into system locations:
+
+```bash
+python3 scripts/install.py -c path/to/config.json --platform macos --dry-run
+python3 scripts/install.py -c path/to/config.json --platform ubuntu --dry-run
+```
+
 List sites:
 
 ```bash
@@ -173,24 +180,19 @@ python3 scripts/uninstall.py -c path/to/config.json --platform ubuntu --dry-run
 Recommended deployment flow:
 
 1. Install CoreDNS and Caddy.
-2. Copy the generated `Corefile` to `/usr/local/etc/coredns/Corefile`.
-3. Copy the generated `Caddyfile` to `/usr/local/etc/caddy/Caddyfile`.
-4. Adjust binary paths in the generated plists if Homebrew installed to a different location.
-5. Load the plists with `launchctl`.
-6. Point your router or client DNS settings at the host machine's LAN IP.
+2. Adjust binary paths in your config if Homebrew installed to a different location.
+3. Preview the install plan with `scripts/install.py --dry-run`.
+4. Run `scripts/install.py --yes` to regenerate artifacts, copy them into system locations, and load the services.
+5. Point your router or client DNS settings at the host machine's LAN IP.
 
 Example:
 
 ```bash
-sudo cp generated/macos/dns/Corefile /usr/local/etc/coredns/Corefile
-sudo cp generated/macos/proxy/Caddyfile /usr/local/etc/caddy/Caddyfile
-sudo cp generated/macos/services/io.charley.coredns.plist /Library/LaunchDaemons/
-sudo cp generated/macos/services/io.charley.caddy.plist /Library/LaunchDaemons/
-sudo launchctl load -w /Library/LaunchDaemons/io.charley.coredns.plist
-sudo launchctl load -w /Library/LaunchDaemons/io.charley.caddy.plist
+sudo python3 scripts/install.py -c examples/sample-config.json --platform macos --dry-run
+sudo python3 scripts/install.py -c examples/sample-config.json --platform macos --yes
 ```
 
-If mDNS advertisement is enabled, copy the generated `generated/macos/mdns/*.plist` files into `/Library/LaunchDaemons/` and load them the same way.
+If mDNS advertisement is enabled, the install script also copies the generated `generated/macos/mdns/*.plist` files into `/Library/LaunchDaemons/` and loads them.
 
 ## Deploying on Ubuntu
 
@@ -205,28 +207,41 @@ If mDNS advertisement is enabled, copy the generated `generated/macos/mdns/*.pli
 Recommended deployment flow:
 
 1. Install CoreDNS and Caddy.
-2. Copy the generated `Corefile` to `/etc/coredns/Corefile`.
-3. Copy the generated `Caddyfile` to `/etc/caddy/Caddyfile`.
-4. Install the generated `systemd` units into `/etc/systemd/system/`.
-5. If mDNS is enabled, copy the generated Avahi service files into `/etc/avahi/services/`.
-6. Reload `systemd`, enable the services, and point your router or clients at this host for DNS.
+2. Preview the install plan with `scripts/install.py --dry-run`.
+3. Run `scripts/install.py --yes` to regenerate artifacts, copy them into system locations, reload `systemd`, and enable the services.
+4. Point your router or clients at this host for DNS.
 
 Example:
 
 ```bash
-sudo cp generated/ubuntu/dns/Corefile /etc/coredns/Corefile
-sudo cp generated/ubuntu/proxy/Caddyfile /etc/caddy/Caddyfile
-sudo cp generated/ubuntu/services/coredns.service /etc/systemd/system/
-sudo cp generated/ubuntu/services/caddy.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now coredns.service caddy.service
+sudo python3 scripts/install.py -c examples/sample-config.json --platform ubuntu --dry-run
+sudo python3 scripts/install.py -c examples/sample-config.json --platform ubuntu --yes
 ```
 
-If Avahi is enabled:
+If Avahi is enabled, the install script also copies the generated `generated/ubuntu/mdns/*.service` files into `/etc/avahi/services/` and restarts Avahi.
+
+## Installing
+
+The install script:
+
+- regenerates the platform artifacts under `generated/<platform>/`
+- copies the deployable files into `/etc/...` or `/Library/LaunchDaemons/...`
+- starts or reloads the managed services for the target platform
+
+It does not install the CoreDNS or Caddy binaries themselves.
+
+Preview the install plan:
 
 ```bash
-sudo cp generated/ubuntu/mdns/*.service /etc/avahi/services/
-sudo systemctl restart avahi-daemon
+python3 scripts/install.py -c examples/sample-config.json --platform macos --dry-run
+python3 scripts/install.py -c examples/sample-config.json --platform ubuntu --dry-run
+```
+
+Run the install:
+
+```bash
+sudo python3 scripts/install.py -c examples/sample-config.json --platform macos --yes
+sudo python3 scripts/install.py -c examples/sample-config.json --platform ubuntu --yes
 ```
 
 ## Uninstalling
