@@ -153,6 +153,13 @@ python3 -m mdns_helpers -c path/to/config.json disable movies
 python3 -m mdns_helpers -c path/to/config.json enable movies
 ```
 
+Preview an uninstall without deleting anything:
+
+```bash
+python3 scripts/uninstall.py -c path/to/config.json --platform macos --dry-run
+python3 scripts/uninstall.py -c path/to/config.json --platform ubuntu --dry-run
+```
+
 ## Deploying on macOS
 
 `apply --platform macos` generates:
@@ -221,6 +228,36 @@ If Avahi is enabled:
 sudo cp generated/ubuntu/mdns/*.service /etc/avahi/services/
 sudo systemctl restart avahi-daemon
 ```
+
+## Uninstalling
+
+The uninstall script removes files managed by this repo:
+
+- generated output under `generated/<platform>/`
+- deployed CoreDNS and Caddy config files
+- deployed `launchd`, `systemd`, and Avahi service files
+
+It does not uninstall the CoreDNS or Caddy binaries themselves.
+
+Preview the uninstall plan:
+
+```bash
+python3 scripts/uninstall.py -c examples/sample-config.json --platform macos --dry-run
+python3 scripts/uninstall.py -c examples/sample-config.json --platform ubuntu --dry-run
+```
+
+Run the uninstall:
+
+```bash
+python3 scripts/uninstall.py -c examples/sample-config.json --platform macos --yes
+python3 scripts/uninstall.py -c examples/sample-config.json --platform ubuntu --yes
+```
+
+Useful flags:
+
+- `--generated-only` removes only repo-generated files.
+- `--deployed-only` removes only installed system files and stops services.
+- `--yes` skips the confirmation prompt.
 
 ## Making LAN resolution work
 
