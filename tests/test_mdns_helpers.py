@@ -55,6 +55,11 @@ class MdnsHelpersTests(unittest.TestCase):
         self.assertIn(root / "proxy" / "Caddyfile", artifacts.files)
         self.assertIn(root / "services" / "caddy.service", artifacts.files)
         self.assertIn(root / "mdns" / "movies.service", artifacts.files)
+        corefile = artifacts.files[root / "dns" / "Corefile"]
+        self.assertIn("hosts {", corefile)
+        self.assertIn("192.168.1.50 movies.home.arpa", corefile)
+        self.assertNotIn("hosts {{", corefile)
+        self.assertNotIn("template IN A", corefile)
 
     def test_generate_macos_artifacts(self):
         config = load_config(str(REPO_ROOT / "examples" / "sample-config.json"))

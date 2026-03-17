@@ -38,6 +38,10 @@ Generated outputs include:
 
 This repository has no Python package dependencies.
 
+Additional docs:
+
+- Ubuntu install and runtime debugging: [docs/debugging.md](/Users/charley/codex/mdns-helpers/docs/debugging.md)
+
 ## Quickstart
 
 Validate the included sample config:
@@ -285,6 +289,8 @@ Generating files is only half of the setup. Other devices on the LAN must actual
 If the DNS server is only configured on your Mac or Ubuntu host, only that machine will resolve `*.home.arpa`.
 
 ## Troubleshooting
+
+See [docs/debugging.md](/Users/charley/codex/mdns-helpers/docs/debugging.md) for a step-by-step DNS vs HTTP debug flow and Ubuntu CoreDNS installation instructions.
 
 `movies.home.arpa` does not resolve:
 
