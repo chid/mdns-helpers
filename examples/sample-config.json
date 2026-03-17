@@ -1,0 +1,40 @@
+{
+  "domain": "home.arpa",
+  "host": {
+    "ipv4": "192.168.1.50",
+    "advertise_hostname": "homeserver"
+  },
+  "output_dir": "../generated",
+  "dns": {
+    "backend": "coredns",
+    "listen": "0.0.0.0:53"
+  },
+  "proxy": {
+    "backend": "caddy",
+    "listen": ":80"
+  },
+  "mdns": {
+    "enabled": true,
+    "service_type": "_http._tcp"
+  },
+  "sites": [
+    {
+      "name": "movies",
+      "hostname": "movies.home.arpa",
+      "kind": "static_dir",
+      "source": "./movies",
+      "enabled": true,
+      "directory_listing": true,
+      "index_files": [
+        "index.html"
+      ]
+    },
+    {
+      "name": "radarr",
+      "hostname": "radarr.home.arpa",
+      "kind": "upstream",
+      "upstream": "http://127.0.0.1:7878",
+      "enabled": true
+    }
+  ]
+}
